@@ -7,12 +7,12 @@
 
 ;; Setup a basic ECS test thing here - move it eventually
 
-(defsystem move
-  (:components-ro (velocity)
-   :components-rw (position))
-  "Moves objects according to their velocity"
-  (incf position-x velocity-x)
-  (incf position-y velocity-y))
+;;(defsystem move
+;;  (:components-ro (velocity)
+;;   :components-rw (position))
+;;  "Moves objects according to their velocity"
+;;  (incf position-x velocity-x)
+;;  (incf position-y velocity-y))
 
 (defsystem print
   (:components-ro (position))
@@ -32,6 +32,8 @@
   "Stop the game and clean up any threads"
   (format t "Stopping game...~%")
 
+  (sdl2-image:quit)
+
   ;; Wait for thread to finish (with timeout of course)
   (stop-thread *game-thread*)
   (stop-thread-by-name "SDL2 Main Thread")
@@ -48,6 +50,7 @@
   (init-ecs)
   (handler-case
       (sdl2:with-init (:video)
+        (sdl2-image:init (:png))
         (sdl2:with-window (window :title "LGJ Fall25"
                                   :w *screen-width*
                                   :h *screen-height*
