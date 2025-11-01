@@ -10,8 +10,6 @@
     (format t "Game already running!~%")
     (return-from start nil))
 
-  (setf *is-running* t)
-
   (setf *game-thread*
         (bt2:make-thread #'game-main :name "game-main"))
   (format t "Game started in thread ~A~%" *game-thread*)
@@ -19,12 +17,7 @@
 
 (defun stop ()
   "Stop the game and clean up any threads"
-  (unless *is-running*
-    (format t "Game already stopped!~%")
-    (return-from stop nil))
-
   (format t "Stopping game...~%")
-  (setf *is-running* nil)
 
   ;; Wait for thread to finish (with timeout of course)
   (stop-thread *game-thread*)
@@ -43,25 +36,19 @@
         (game-loop renderer)))))
 
 (defun game-loop (renderer)
-  "Game Loop"
-  (setf *is-running* t)
-  (loop while *is-running*
-        do (handle-events)
-           (update)
-           (render renderer)
-           (sdl2:delay 16))
-  (format t "Left the game-loop")
-  (stop))
-
-(defun handle-events ()
   (sdl2:with-event-loop (:method :poll)
     (:quit ()
            (format t "Quit event received~%")
-           (setf *is-running* nil))
+           t)
     (:keydown (:keysym keysym)
               (when (sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
-                (format t "Escape pressed, stopping game~%")
-                (setf *is-running* nil)))))
+                (format t "Escape pressed, stopping game~%")))
+    (:idle ()
+           (update)
+           (render renderer)
+           (sdl2:delay 16)))
+  (format t "Left the game-loop")
+  (stop))
 
 (defun update ()
   "Update game state stuff"
@@ -79,4 +66,3 @@
 
   ;; Present the frame
   (sdl2:render-present renderer))
-
