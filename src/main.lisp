@@ -6,37 +6,17 @@
 (defparameter *game-thread* nil)
 
 ;; Setup a basic ECS test thing here - move it eventually
-(defcomponent coordinate
-  "Location Information"
-  (x 0.0 :type single-float :documentation "X Coordinate")
-  (y 0.0 :type single-float :documentation "Y Coordinate"))
-
-(defcomponent velocity
-  "Velocity Information"
-  (x 0.0 :type single-float)
-  (y 0.0 :type single-float))
-
 
 (defsystem move
   (:components-ro (velocity)
-   :components-rw (coordinate))
+   :components-rw (position))
   "Moves objects according to their velocity"
-  (incf coordinate-x velocity-x)
-  (incf coordinate-y velocity-y))
+  (incf position-x velocity-x)
+  (incf position-y velocity-y))
 
 (defsystem print
-  (:components-ro (coordinate))
-  (format t "entity ~a: (~a, ~a)~%" entity coordinate-x coordinate-y))
-
-(make-storage)
-
-(let ((entity0 (make-entity)))
-  (make-coordinate entity0 :x 0.0 :y 0.0)
-  (make-velocity entity0 :x 0.5 :y 0.5)
-  (make-object '((:coordinate :x 1.0 :y 1.0)
-                 (:velocity :x 0.1 :y 0.1)))
-  (dotimes (i 3)
-    (run-systems)))
+  (:components-ro (position))
+  (format t "entity ~a: (~a, ~a)~%" entity position-x position-y))
 
 (defun start ()
   (when (and *game-thread* (bt2:thread-alive-p *game-thread*))
@@ -59,34 +39,57 @@
   (format t "Game stopped.~%")
   t)
 
+(defun init-ecs ()
+  (make-storage)
+  (load-player))
+
 (defun game-main ()
   "Main entry point"
-  (sdl2:with-init (:video)
-    (sdl2:with-window (window :title "LGJ Fall25"
-                              :w *screen-width*
-                              :h *screen-height*
-                              :flags '(:shown))
-      (sdl2:with-renderer (renderer window :flags '(:accelerated))
-        (game-loop renderer)))))
+  (init-ecs)
+  (handler-case
+      (sdl2:with-init (:video)
+        (sdl2:with-window (window :title "LGJ Fall25"
+                                  :w *screen-width*
+                                  :h *screen-height*
+                                  :flags '(:shown))
+          (sdl2:with-renderer (renderer window :flags '(:accelerated))
+            (game-loop renderer))))
+    (error (e)
+      (format t "Error in game thread: ~A~%" e)
+      (stop))))
+
+(defun calculate-delta-time (last-time)
+  (let* ((current-time (/ (sdl2:get-ticks) 1000.0))
+         (delta-time (- current-time last-time)))
+    (values last-time delta-time)))
 
 (defun game-loop (renderer)
-  (sdl2:with-event-loop (:method :poll)
-    (:quit ()
-           (format t "Quit event received~%")
-           t)
-    (:keydown (:keysym keysym)
-              (when (sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
-                (format t "Escape pressed, stopping game~%")))
-    (:idle ()
-           (update)
-           (render renderer)
-           (sdl2:delay 16)))
+  (let ((last-frame-time (/ (sdl2:get-ticks) 1000.0)))
+    (sdl2:with-event-loop (:method :poll)
+      (:quit ()
+             (format t "Quit event received~%")
+             t)
+      (:keydown (:keysym keysym)
+                (let ((scancode (sdl2:scancode-value keysym)))
+                  (when (sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
+                    (format t "Escape pressed, stopping game~%"))
+                  ;; Track key pressed
+                  (setf (gethash scancode *keys-pressed*) t)))
+      (:keyup (:keysym keysym)
+              ;; Track key released
+              (setf (gethash (sdl2:scancode-value keysym) *keys-pressed*) nil))
+      (:idle ()
+             (multiple-value-bind (last-frame-time delta-time)
+                 (calculate-delta-time last-frame-time)
+               (update delta-time)
+               (render renderer)
+               (sdl2:delay 16)))))
   (format t "Left the game-loop")
   (stop))
 
-(defun update ()
+(defun update (dt)
   "Update game state stuff"
-  nil)
+  (run-systems :dt (float dt 0.0)))
 
 (defun render (renderer)
   "Render the game"
