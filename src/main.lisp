@@ -5,6 +5,39 @@
 (defparameter *is-running* t)
 (defparameter *game-thread* nil)
 
+;; Setup a basic ECS test thing here - move it eventually
+(defcomponent coordinate
+  "Location Information"
+  (x 0.0 :type single-float :documentation "X Coordinate")
+  (y 0.0 :type single-float :documentation "Y Coordinate"))
+
+(defcomponent velocity
+  "Velocity Information"
+  (x 0.0 :type single-float)
+  (y 0.0 :type single-float))
+
+
+(defsystem move
+  (:components-ro (velocity)
+   :components-rw (coordinate))
+  "Moves objects according to their velocity"
+  (incf coordinate-x velocity-x)
+  (incf coordinate-y velocity-y))
+
+(defsystem print
+  (:components-ro (coordinate))
+  (format t "entity ~a: (~a, ~a)~%" entity coordinate-x coordinate-y))
+
+(make-storage)
+
+(let ((entity0 (make-entity)))
+  (make-coordinate entity0 :x 0.0 :y 0.0)
+  (make-velocity entity0 :x 0.5 :y 0.5)
+  (make-object '((:coordinate :x 1.0 :y 1.0)
+                 (:velocity :x 0.1 :y 0.1)))
+  (dotimes (i 3)
+    (run-systems)))
+
 (defun start ()
   (when (and *game-thread* (bt2:thread-alive-p *game-thread*))
     (format t "Game already running!~%")
@@ -21,6 +54,7 @@
 
   ;; Wait for thread to finish (with timeout of course)
   (stop-thread *game-thread*)
+  (stop-thread-by-name "SDL2 Main Thread")
   (setf *game-thread* nil)
   (format t "Game stopped.~%")
   t)
