@@ -5,19 +5,6 @@
 (defparameter *is-running* t)
 (defparameter *game-thread* nil)
 
-;; Setup a basic ECS test thing here - move it eventually
-
-;;(defsystem move
-;;  (:components-ro (velocity)
-;;   :components-rw (position))
-;;  "Moves objects according to their velocity"
-;;  (incf position-x velocity-x)
-;;  (incf position-y velocity-y))
-
-(defsystem print
-  (:components-ro (position))
-  (format t "entity ~a: (~a, ~a)~%" entity position-x position-y))
-
 (defun start ()
   (when (and *game-thread* (bt2:thread-alive-p *game-thread*))
     (format t "Game already running!~%")
@@ -41,22 +28,21 @@
   (format t "Game stopped.~%")
   t)
 
-(defun init-ecs ()
-  (make-storage)
-  (load-player))
-
 (defun game-main ()
   "Main entry point"
-  (init-ecs)
   (handler-case
       (sdl2:with-init (:video)
-        (sdl2-image:init (:png))
+        (sdl2-image:init '(:png))
         (sdl2:with-window (window :title "LGJ Fall25"
                                   :w *screen-width*
                                   :h *screen-height*
                                   :flags '(:shown))
           (sdl2:with-renderer (renderer window :flags '(:accelerated))
-            (game-loop renderer))))
+            (init-game renderer)
+            (unwind-protect
+                 (game-loop renderer)
+              (free-textures)
+              (stop)))))
     (error (e)
       (format t "Error in game thread: ~A~%" e)
       (stop))))
@@ -84,25 +70,25 @@
       (:idle ()
              (multiple-value-bind (last-frame-time delta-time)
                  (calculate-delta-time last-frame-time)
-               (update delta-time)
-               (render renderer)
+               (update-game delta-time)
+               (render-game renderer)
                (sdl2:delay 16)))))
   (format t "Left the game-loop")
   (stop))
 
-(defun update (dt)
-  "Update game state stuff"
-  (run-systems :dt (float dt 0.0)))
+;;(defun update (dt)
+;;"Update game state stuff")
+;;(run-systems :dt (float dt 0.0)))
 
-(defun render (renderer)
-  "Render the game"
-  ;; Clear screen to black
-  (sdl2:set-render-draw-color renderer 0 0 0 255)
-  (sdl2:render-clear renderer)
+;;(defun render (renderer)
+;;  "Render the game")
+;; Clear screen to black
+;; (sdl2:set-render-draw-color renderer 0 0 0 255)
+;; (sdl2:render-clear renderer)
 
-  ;; Draw dat rect
-  (sdl2:set-render-draw-color renderer 255 255 255 255)
-  (sdl2:render-fill-rect renderer (sdl2:make-rect 100 100 50 50))
+;; ;; Draw dat rect
+;; (sdl2:set-render-draw-color renderer 255 255 255 255)
+;; (sdl2:render-fill-rect renderer (sdl2:make-rect 100 100 50 50))
 
-  ;; Present the frame
-  (sdl2:render-present renderer))
+;; ;; Present the frame
+;; (sdl2:render-present renderer))

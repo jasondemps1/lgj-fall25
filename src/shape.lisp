@@ -4,8 +4,8 @@
 ;;  (make-object ((:size :width width :height height)
 ;;                (:position :x x :y y))))
 ;;
-(defcomponent shape
-  "Shape Component")
+;;(defcomponent shape
+;;  "Shape Component")
 
 ;;(defcomponent rect-shape
 ;;  "Rect - Shape - Tag"

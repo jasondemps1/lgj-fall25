@@ -2,12 +2,12 @@
 
 ;; COMPONENTS
 
-(defcomponent image
-  "Image Component"
-  (surface (cffi:null-pointer) :type cffi:foreign-pointer)
-  (width 0 :type fixnum)
-  (height 0 :type fixnum)
-  (scale 1.0 :type single-float))
+;;(defcomponent image
+;;  "Image Component"
+;;  (surface (cffi:null-pointer) :type cffi:foreign-pointer)
+;;  (width 0 :type fixnum)
+;;  (height 0 :type fixnum)
+;;  (scale 1.0 :type single-float))
 
 ;; SYSTEMS
 
