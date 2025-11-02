@@ -20,9 +20,11 @@
   (format t "Stopping game...~%")
 
   (sdl2-image:quit)
+  (sdl2-ttf:quit)
 
   ;; Wait for thread to finish (with timeout of course)
-  (stop-thread *game-thread*)
+  (unless (null *game-thread*)
+    (stop-thread *game-thread*))
   (stop-thread-by-name "SDL2 Main Thread")
   (setf *game-thread* nil)
   (format t "Game stopped.~%")
@@ -33,6 +35,7 @@
   (handler-case
       (sdl2:with-init (:video)
         (sdl2-image:init '(:png))
+        (sdl2-ttf:init)
         (sdl2:with-window (window :title "LGJ Fall25"
                                   :w *screen-width*
                                   :h *screen-height*
@@ -42,6 +45,7 @@
             (unwind-protect
                  (game-loop renderer)
               (free-textures)
+              (free-fonts)
               (stop)))))
     (error (e)
       (format t "Error in game thread: ~A~%" e)
@@ -50,31 +54,41 @@
 (defun calculate-delta-time (last-time)
   (let* ((current-time (/ (sdl2:get-ticks) 1000.0))
          (delta-time (- current-time last-time)))
-    (values last-time delta-time)))
+    (values current-time delta-time)))
 
 (defun game-loop (renderer)
   (let ((last-frame-time (/ (sdl2:get-ticks) 1000.0)))
+    (setf *frame-times* nil)  ; Reset FPS tracking
     (sdl2:with-event-loop (:method :poll)
       (:quit ()
              (format t "Quit event received~%")
              t)
       (:keydown (:keysym keysym)
                 (let ((scancode (sdl2:scancode-value keysym)))
-                  (when (sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
+                  (format t "Scancode down: ~A~%" scancode)
+                  (when (sdl2:scancode= scancode :scancode-escape)
                     (format t "Escape pressed, stopping game~%"))
-                  ;; Track key pressed
-                  (setf (gethash scancode *keys-pressed*) t)))
+                  (setf (gethash scancode *keys-pressed*) t))
+                (maphash (lambda (k v) (format t "~A: ~A~%" k v)) *keys-pressed*))
       (:keyup (:keysym keysym)
-              ;; Track key released
-              (setf (gethash (sdl2:scancode-value keysym) *keys-pressed*) nil))
+              (let ((scancode (sdl2:scancode-value keysym)))
+                (format t "Scancode up: ~A~%" scancode)
+                (setf (gethash scancode *keys-pressed*) nil))
+              (maphash (lambda (k v) (format t "~A: ~A~%" k v)) *keys-pressed*))
       (:idle ()
-             (multiple-value-bind (last-frame-time delta-time)
-                 (calculate-delta-time last-frame-time)
-               (update-game delta-time)
-               (render-game renderer)
-               (sdl2:delay 16)))))
-  (format t "Left the game-loop")
-  (stop))
+             (setf last-frame-time (update-main renderer last-frame-time)))))
+  (format t "Left the game-loop~%"))
+
+(defun update-main (renderer last-frame-time)
+  (multiple-value-bind (last-frame-time delta-time)
+      (calculate-delta-time last-frame-time)
+    (update-fps delta-time)
+    (update-game delta-time)
+    (render-game renderer)
+    (sdl2:delay 16)
+    last-frame-time))
+
+;;(stop))
 
 ;;(defun update (dt)
 ;;"Update game state stuff")
