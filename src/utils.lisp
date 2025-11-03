@@ -7,7 +7,6 @@
         (bt2:with-timeout (timeout)
           (bt2:join-thread thread))
       (bt2:timeout ()
-        ;;(error (e)
         (format t "Thread didn't stop gracefully, destroy...~%")
         (bt2:destroy-thread thread)))
     (format t "Stopped thread: ~A~%" thread-name)
@@ -19,7 +18,15 @@
                       :key #'bt2:thread-name
                       :test #'string=)))
     (if thread
-        (stop-thread thread :timeout timeout)
+        (progn
+          (handler-case
+              (bt2:with-timeout (timeout)
+                (bt2:join-thread thread))
+            (bt2:timeout ()
+              (format t "Thread didn't stop gracefully, destroy...~%")
+              (bt2:destroy-thread thread)))
+          (format t "Stopped thread: ~A~%" thread-name)
+          t)
         (progn
           (format t "Thread not found: ~A~%" thread-name)
           nil))))
