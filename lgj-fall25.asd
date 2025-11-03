@@ -8,6 +8,7 @@
                (:module "src"
                 :components
                 ((:file "utils")
+                 (:file "tilemap")
                  (:file "fonts")
                  (:file "debug")
                  (:file "movement")
