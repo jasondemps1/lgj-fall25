@@ -23,7 +23,7 @@
     (dolist (tileset (cl-tiled:map-tilesets tiled-map))
       (let* ((image-source (cl-tiled:tileset-image tileset))
              ;; Resolve relative path from TMX file location
-             (image-path (merge-pathnames image-source (uiop:pathname-directory-pathname tmx-filepath)))
+             (image-path (merge-pathnames (cl-tiled:image-source image-source) (uiop:pathname-directory-pathname tmx-filepath)))
              (texture (load-texture renderer (namestring image-path))))
         (when texture
           (setf (gethash (cl-tiled:tileset-name tileset) (tilemap-textures tm))

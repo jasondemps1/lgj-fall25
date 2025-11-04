@@ -9,6 +9,7 @@
                 :components
                 ((:file "utils")
                  (:file "tilemap")
+                 (:file "camera")
                  (:file "fonts")
                  (:file "debug")
                  (:file "movement")
