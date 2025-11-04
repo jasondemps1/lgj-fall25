@@ -1,0 +1,41 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "level1.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "dungeon.tsx": {
+            "scaleInDock": 4.0097,
+            "scaleInEditor": 3.8
+        },
+        "level1.tmx": {
+            "scale": 3.3619,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": -46.5510574377584,
+                "y": -0.8923525387429692
+            }
+        }
+    },
+    "last.imagePath": "/Users/jdemps/.quicklisp/local-projects/lgj-fall25/src/assets",
+    "map.fixedSize": false,
+    "map.lastUsedFormat": "tmx",
+    "openFiles": [
+        "dungeon.tsx",
+        "level1.tmx"
+    ],
+    "project": "game-maps.tiled-project",
+    "recentFiles": [
+        "dungeon.tsx",
+        "level1.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
